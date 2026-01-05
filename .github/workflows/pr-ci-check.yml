@@ -46,3 +46,4 @@ jobs:
           file _output/bin/linux/s390x/velero
           
           echo "✅ s390x compilation successful"
+          ARCH=linux-s390x make test
