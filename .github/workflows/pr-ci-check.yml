@@ -19,14 +19,31 @@ jobs:
       - name: Set up Go version
         uses: actions/setup-go@v6
         with:
-          go-version: ${{ needs.get-go-version.outputs.version }}      
+          go-version: ${{ needs.get-go-version.outputs.version }}
 
-      - name: Make ci
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run main CI tests
         run: make ci
-      - name: Upload test coverage
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage.out
-          verbose: true
-          fail_ci_if_error: true
+
+      - name: Build for s390x architecture
+        run: |
+          echo "Building Velero for s390x architecture..."
+          
+          # Build using the existing Makefile target
+          ARCH=linux-s390x make build
+          
+          # Verify the binary was created
+          if [ ! -f "_output/bin/linux/s390x/velero" ]; then
+            echo "ERROR: s390x binary not created!"
+            exit 1
+          fi
+          
+          # Show binary information
+          echo "Binary details:"
+          ls -lh _output/bin/linux/s390x/velero
+          file _output/bin/linux/s390x/velero
+          
+          echo "✅ s390x compilation successful"
+          ARCH=linux-s390x make test
